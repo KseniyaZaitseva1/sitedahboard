@@ -1,0 +1,1366 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Q2 2026 · Дашборд курсов Zerocoder</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#070014;
+  --bg-2:#120634;
+  --violet:#8B5CF6;
+  --violet-2:#A78BFA;
+  --violet-3:#6D28D9;
+  --pink:#EC4899;
+  --gold:#F5C44A;
+  --green:#10B981;
+  --green-2:#34D399;
+  --red:#F87171;
+  --text:#FFFFFF;
+  --muted:#C7BFE0;
+  --card:rgba(139,92,246,.10);
+  --card-br:rgba(167,139,250,.35);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;width:100%;background:var(--bg);color:var(--text);
+  font-family:'Inter','Segoe UI','SF Pro Display',system-ui,Arial,sans-serif;
+  overflow:hidden;letter-spacing:-.01em}
+
+/* ===== Animated background ===== */
+.bg-mesh{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.bg-mesh::before,
+.bg-mesh::after{
+  content:"";position:absolute;border-radius:50%;filter:blur(120px);opacity:.55;
+  animation:float 18s ease-in-out infinite;
+}
+.bg-mesh::before{
+  width:60vw;height:60vw;left:-15vw;top:-20vh;
+  background:radial-gradient(circle,var(--violet) 0%,transparent 70%);
+}
+.bg-mesh::after{
+  width:55vw;height:55vw;right:-12vw;bottom:-15vh;
+  background:radial-gradient(circle,var(--pink) 0%,transparent 70%);
+  animation-delay:-9s;
+}
+.bg-mesh .blob3{
+  position:absolute;left:30vw;top:40vh;width:45vw;height:45vw;border-radius:50%;
+  filter:blur(140px);opacity:.40;
+  background:radial-gradient(circle,#3B0F73 0%,transparent 70%);
+  animation:float 22s ease-in-out infinite -4s;
+}
+@keyframes float{
+  0%,100%{transform:translate(0,0) scale(1)}
+  33%{transform:translate(40px,-30px) scale(1.08)}
+  66%{transform:translate(-30px,40px) scale(.95)}
+}
+.grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.04;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.95' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='.6'/></svg>");
+  mix-blend-mode:overlay}
+
+/* ===== Slides ===== */
+.deck{position:fixed;inset:0;perspective:1800px;perspective-origin:50% 50%;z-index:2}
+.slide{
+  position:absolute;inset:0;display:flex;align-items:flex-start;justify-content:center;
+  padding:4vh 5vw 12vh;opacity:0;pointer-events:none;overflow:auto;
+  transform:translate3d(120%,0,-600px) rotateY(35deg) scale(.85);
+  filter:blur(14px) brightness(.4);
+  transition:transform .9s cubic-bezier(.7,.0,.15,1),
+             opacity .55s cubic-bezier(.5,0,.3,1),
+             filter .8s cubic-bezier(.7,.0,.15,1);
+  will-change:transform,opacity,filter;
+  transform-style:preserve-3d;
+}
+.slide.prev{
+  transform:translate3d(-120%,0,-600px) rotateY(-35deg) scale(.85);
+  filter:blur(14px) brightness(.4);opacity:0;
+}
+.slide.active{
+  transform:translate3d(0,0,0) rotateY(0) scale(1);
+  opacity:1;filter:blur(0) brightness(1);pointer-events:auto;
+}
+.slide .inner{width:100%;max-width:1400px;text-align:left;position:relative;z-index:2}
+
+/* ===== Typography ===== */
+.kicker{
+  display:inline-flex;align-items:center;gap:10px;font-size:13px;letter-spacing:.32em;
+  text-transform:uppercase;color:var(--violet-2);padding:8px 18px;
+  border:1px solid var(--card-br);border-radius:999px;background:var(--card);
+  backdrop-filter:blur(10px);margin-bottom:18px;
+}
+.kicker .dot{width:6px;height:6px;border-radius:50%;background:var(--violet-2);box-shadow:0 0 10px var(--violet-2)}
+h1{
+  font-size:clamp(40px,6vw,84px);font-weight:800;line-height:.95;
+  background:linear-gradient(135deg,#fff 0%,var(--violet-2) 55%,var(--pink) 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  letter-spacing:-.035em;margin-bottom:14px;
+}
+h1 .icon{display:inline-block;margin-right:14px;-webkit-text-fill-color:initial;filter:drop-shadow(0 8px 20px rgba(139,92,246,.45))}
+h2{
+  font-size:clamp(28px,4vw,52px);font-weight:800;line-height:1;
+  background:linear-gradient(135deg,#fff,var(--violet-2));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  letter-spacing:-.025em;margin-bottom:12px;
+}
+.lead{font-size:clamp(15px,1.3vw,19px);color:#EDE9FE;max-width:1100px;line-height:1.45;margin-bottom:14px}
+.muted{color:var(--muted)}
+p,li{font-size:clamp(14px,1.1vw,17px);line-height:1.5;color:var(--muted)}
+
+/* ===== Pills/chips ===== */
+.chip{
+  display:inline-flex;align-items:center;gap:8px;padding:7px 16px;border-radius:999px;
+  background:var(--card);border:1px solid var(--card-br);font-size:13px;color:#EDE9FE;
+  backdrop-filter:blur(10px);margin-right:10px;margin-bottom:8px;
+}
+.chip.green{background:rgba(16,185,129,.14);border-color:rgba(52,211,153,.4);color:#A7F3D0}
+.chip.pink{background:rgba(236,72,153,.16);border-color:rgba(236,72,153,.4);color:#FBCFE8}
+.chip.gold{background:rgba(245,196,74,.14);border-color:rgba(245,196,74,.4);color:#FCE7A6}
+
+/* ===== Cards ===== */
+.grid{display:grid;gap:18px}
+.grid-2{grid-template-columns:1fr 1fr}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+.grid-4{grid-template-columns:repeat(4,1fr)}
+.card{
+  background:linear-gradient(160deg,rgba(139,92,246,.18),rgba(236,72,153,.05));
+  border:1px solid var(--card-br);border-radius:22px;padding:22px 22px;
+  backdrop-filter:blur(14px);text-align:left;position:relative;overflow:hidden;
+}
+.stat-card{padding:22px 22px}
+.stat-card .label{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.stat-card .value{
+  font-size:clamp(36px,4vw,56px);font-weight:800;line-height:1;
+  background:linear-gradient(135deg,#fff,var(--violet-2));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  font-variant-numeric:tabular-nums;
+}
+.stat-card.green .value{background:linear-gradient(135deg,#fff,var(--green-2));-webkit-background-clip:text;background-clip:text}
+.stat-card.gold .value{background:linear-gradient(135deg,#fff,var(--gold));-webkit-background-clip:text;background-clip:text}
+.stat-card.pink .value{background:linear-gradient(135deg,#fff,var(--pink));-webkit-background-clip:text;background-clip:text}
+.stat-card .sub{font-size:13px;color:#9C95B5;margin-top:6px}
+.stat-card .delta{
+  display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;
+  background:rgba(255,255,255,.07);font-size:12px;color:var(--muted);margin-top:8px;
+}
+.stat-card .delta.up{color:#A7F3D0;background:rgba(16,185,129,.15)}
+.stat-card .delta.down{color:#FBCFE8;background:rgba(236,72,153,.15)}
+
+/* ===== Charts row ===== */
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px}
+.chart-card{padding:20px 22px;min-height:280px;display:flex;flex-direction:column}
+.chart-card h3{font-size:16px;font-weight:700;color:#fff;margin-bottom:6px}
+.chart-card .chart-sub{font-size:12px;color:#9C95B5;margin-bottom:12px}
+.chart-canvas-wrap{flex:1;position:relative;min-height:220px}
+
+/* ===== CSAT breakdown ===== */
+.csat-decode{padding:20px 24px;margin-top:18px}
+.csat-decode .head-row{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:10px;margin-bottom:6px}
+.csat-decode h3{font-size:16px;font-weight:700;color:#fff;margin:0}
+.csat-decode .head-row .summary{font-size:12.5px;color:#9C95B5}
+.csat-decode .head-row .summary b{color:#fff;font-weight:700}
+.csat-decode .grid-decode{display:grid;grid-template-columns:1fr 1fr;gap:18px 28px;margin-top:14px}
+.csat-decode .row{padding:6px 0}
+.csat-decode .row .head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;gap:10px}
+.csat-decode .row .name{font-size:14px;font-weight:700;color:#fff;letter-spacing:.01em}
+.csat-decode .row .target{font-size:11.5px;color:#9C95B5;letter-spacing:.08em;text-transform:uppercase}
+.csat-decode .bar{position:relative;height:10px;border-radius:999px;
+  background:rgba(255,255,255,.07);overflow:visible}
+.csat-decode .fill{position:absolute;left:0;top:0;height:100%;border-radius:999px;
+  background:linear-gradient(90deg,var(--violet),var(--pink));
+  box-shadow:0 0 12px rgba(167,139,250,.5);
+  transition:width 1.1s cubic-bezier(.7,0,.15,1);}
+.csat-decode .fill.ok{background:linear-gradient(90deg,#059669,#34D399);box-shadow:0 0 12px rgba(52,211,153,.45)}
+.csat-decode .fill.warn{background:linear-gradient(90deg,#F59E0B,#FCD34D);box-shadow:0 0 12px rgba(252,211,77,.45)}
+.csat-decode .fill.bad{background:linear-gradient(90deg,#DC2626,#FCA5A5);box-shadow:0 0 12px rgba(252,165,165,.45)}
+.csat-decode .target-line{position:absolute;top:-4px;bottom:-4px;width:2px;background:rgba(255,255,255,.85);
+  border-radius:2px}
+.csat-decode .target-line::after{content:"план";position:absolute;top:-15px;left:50%;
+  transform:translateX(-50%);font-size:9px;color:rgba(255,255,255,.55);letter-spacing:.12em}
+.csat-decode .foot{display:flex;justify-content:space-between;align-items:center;
+  margin-top:8px;gap:10px;flex-wrap:wrap}
+.csat-decode .val{font-size:18px;font-weight:800;color:#fff;font-variant-numeric:tabular-nums;line-height:1}
+.csat-decode .delta{font-size:11.5px;padding:3px 10px;border-radius:999px;font-weight:700;letter-spacing:.04em}
+.csat-decode .delta.ok{color:#A7F3D0;background:rgba(16,185,129,.18);border:1px solid rgba(52,211,153,.4)}
+.csat-decode .delta.warn{color:#FCD34D;background:rgba(245,158,11,.18);border:1px solid rgba(252,211,77,.4)}
+.csat-decode .delta.bad{color:#FCA5A5;background:rgba(220,38,38,.18);border:1px solid rgba(252,165,165,.4)}
+.csat-decode .detail{font-size:11.5px;color:#9C95B5;font-variant-numeric:tabular-nums}
+.csat-decode .weak-banner{
+  margin-top:14px;padding:12px 16px;border-radius:14px;
+  background:rgba(248,113,113,.10);border:1px solid rgba(252,165,165,.32);
+  color:#FBCFE8;font-size:13px;line-height:1.5;
+}
+.csat-decode .weak-banner.ok{
+  background:rgba(16,185,129,.10);border-color:rgba(52,211,153,.32);color:#A7F3D0;
+}
+.csat-decode .weak-banner b{color:#fff}
+
+/* ===== Quote and risk ===== */
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin-top:18px}
+.qcol{padding:18px 20px;background:var(--card);border:1px solid var(--card-br);
+  border-radius:18px;backdrop-filter:blur(10px)}
+.qcol h4{font-size:14px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.18em;
+  margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.qcol.praise h4{color:#A7F3D0}
+.qcol.improve h4{color:#FCE7A6}
+.qcol.risks h4{color:#FBCFE8}
+.qcol .quote{
+  font-size:14px;line-height:1.5;color:#E5E0F4;border-left:3px solid var(--violet-2);
+  padding-left:12px;margin-bottom:12px;font-style:italic;
+}
+.qcol.praise .quote{border-left-color:var(--green-2)}
+.qcol.improve .quote{border-left-color:var(--gold)}
+.qcol ul{list-style:none;display:flex;flex-direction:column;gap:10px}
+.qcol li{font-size:14px;line-height:1.45;color:#E5E0F4;padding-left:18px;position:relative}
+.qcol li::before{content:"▸";position:absolute;left:0;color:var(--pink);font-weight:700}
+.qcol.empty{opacity:.55}
+.qcol.empty .nodata{font-size:13px;color:#9C95B5;font-style:italic}
+
+/* ===== Conclusion ===== */
+.concl{
+  margin-top:22px;padding:20px 26px;border-radius:20px;
+  background:linear-gradient(135deg,rgba(16,185,129,.18),rgba(167,139,250,.08));
+  border:1px solid rgba(52,211,153,.35);
+  font-size:clamp(14px,1.15vw,17px);line-height:1.55;color:#ECFDF5;
+  position:relative;
+}
+.concl::before{
+  content:"📌";position:absolute;top:18px;left:-10px;font-size:28px;
+  background:#0B2520;border-radius:50%;padding:6px;
+}
+.concl-inner{padding-left:36px}
+
+/* ===== Status row ===== */
+.status-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+
+/* ===== Intro slide ===== */
+.intro-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:34px}
+.intro-stats .stat-card{text-align:center}
+.intro-stats .stat-card .value{font-size:clamp(40px,5vw,68px)}
+.start-btn{
+  display:inline-flex;align-items:center;gap:14px;margin-top:34px;padding:16px 32px;
+  border:none;border-radius:999px;cursor:pointer;font-size:17px;font-weight:700;
+  background:linear-gradient(135deg,var(--violet),var(--pink));
+  color:#fff;letter-spacing:.04em;
+  box-shadow:0 20px 60px -10px rgba(236,72,153,.5);
+  transition:transform .25s ease,box-shadow .25s ease;
+}
+.start-btn:hover{transform:translateY(-2px);box-shadow:0 25px 80px -10px rgba(236,72,153,.7)}
+.start-btn .arrow{transition:transform .3s ease}
+.start-btn:hover .arrow{transform:translateX(4px)}
+
+/* ===== Header row with course chips ===== */
+.header-row{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;margin-bottom:8px}
+.header-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.tags-list{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;max-width:380px}
+
+/* ===== Navigation ===== */
+.nav{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:50;
+  display:flex;align-items:center;gap:8px;
+  background:rgba(7,0,20,.7);backdrop-filter:blur(18px);
+  border:1px solid var(--card-br);border-radius:999px;padding:8px 14px;
+}
+.nav button{
+  width:38px;height:38px;border-radius:50%;border:none;background:transparent;color:#fff;
+  cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;
+  transition:background .25s ease,transform .25s ease;
+}
+.nav button:hover{background:rgba(139,92,246,.25);transform:scale(1.08)}
+.nav .counter{font-size:13px;color:var(--muted);letter-spacing:.15em;min-width:54px;text-align:center;
+  font-variant-numeric:tabular-nums}
+.dots{display:flex;gap:8px;align-items:center;padding:0 8px}
+.dot{
+  width:9px;height:9px;border-radius:50%;background:rgba(167,139,250,.35);cursor:pointer;
+  transition:transform .25s ease, background .25s ease;
+}
+.dot:hover{transform:scale(1.4);background:var(--violet-2)}
+.dot.active{
+  background:linear-gradient(135deg,var(--violet),var(--pink));
+  transform:scale(1.5);box-shadow:0 0 12px rgba(139,92,246,.6);
+}
+.kbd-hint{
+  position:fixed;bottom:18px;right:24px;z-index:50;font-size:11px;color:#7E7796;
+  letter-spacing:.15em;text-transform:uppercase;
+}
+.kbd-hint kbd{
+  display:inline-block;padding:2px 8px;border:1px solid var(--card-br);border-radius:6px;
+  background:var(--card);color:var(--violet-2);font-family:inherit;font-size:10px;margin:0 2px;
+}
+
+/* ===== Compact mode for slides ===== */
+@media (max-height:760px){
+  .slide{padding:3vh 4vw 10vh}
+  h1{font-size:clamp(32px,4.4vw,56px)}
+  .stat-card .value{font-size:clamp(28px,3vw,40px)}
+  .chart-card{min-height:220px}
+  .qcol{padding:14px 16px}
+}
+
+/* ===== Stagger animation ===== */
+.slide.active .stagger > *{
+  animation:rise .7s cubic-bezier(.2,.7,.2,1) backwards;
+}
+.slide.active .stagger > *:nth-child(1){animation-delay:.05s}
+.slide.active .stagger > *:nth-child(2){animation-delay:.13s}
+.slide.active .stagger > *:nth-child(3){animation-delay:.21s}
+.slide.active .stagger > *:nth-child(4){animation-delay:.29s}
+.slide.active .stagger > *:nth-child(5){animation-delay:.37s}
+.slide.active .stagger > *:nth-child(6){animation-delay:.45s}
+@keyframes rise{
+  from{opacity:0;transform:translateY(18px)}
+  to{opacity:1;transform:translateY(0)}
+}
+</style>
+</head>
+<body>
+<div class="bg-mesh"><div class="blob3"></div></div>
+<div class="grain"></div>
+<div class="deck" id="deck">
+<section class="slide">
+  <div class="inner stagger">
+    <div class="kicker"><span class="dot"></span>Q2 2026 · Zerocoder Educational</div>
+    <h1>Дашборд курсов</h1>
+    <p class="lead">Итоги второго квартала 2026 по портфелю AI-курсов. Цифры по объединённой анкете CSAT+NPS, NPS, доходимости и обратной связи студентов за период 01.04.2026 — 30.06.2026.</p>
+    <div class="status-row"><span class="chip">🤖&nbsp;Claude Code</span><span class="chip">📊&nbsp;AI-таблицы</span><span class="chip">🔍&nbsp;Perplexity</span><span class="chip">🎨&nbsp;Визуальный контент</span><span class="chip">🎓&nbsp;Цифровой старт</span><span class="chip">✨&nbsp;Нейросети для жизни</span><span class="chip">🛡️&nbsp;Цифровая безопасность</span></div>
+    <div class="intro-stats">
+      <div class="card stat-card">
+  <div class="label">Курсов в портфеле</div>
+  <div class="value" data-count="7" data-suffix="">0</div>
+  <div class="sub">продуктов</div>
+</div>
+      <div class="card stat-card gold">
+  <div class="label">Студентов</div>
+  <div class="value" data-count="2115" data-suffix="">0</div>
+  <div class="sub">по доступным потокам</div>
+</div>
+      <div class="card stat-card green">
+  <div class="label">Ответов CSAT</div>
+  <div class="value" data-count="1897" data-suffix="">0</div>
+  <div class="sub">из обеих анкет</div>
+</div>
+      <div class="card stat-card pink">
+  <div class="label">Средний CSAT</div>
+  <div class="value" data-count="64.8" data-suffix="%">0%</div>
+  <div class="sub">среднее по курсам</div>
+</div>
+    </div>
+    <button class="start-btn">Начать просмотр <span class="arrow">→</span></button>
+  </div>
+</section>
+<section class="slide">
+  <div class="inner stagger">
+    <div class="header-row">
+      <div>
+        <div class="kicker"><span class="dot"></span>Курс 1 из 7 · Q2 2026</div>
+        <h1><span class="icon">🤖</span>Claude Code: практический курс по AI-разработке</h1>
+        <p class="lead">Дать практикам и предпринимателям системный навык вайб-кодинга на Claude Code: от формулирования задачи до собственных скиллов, агентов и MVP. Закрыть рынку запрос на быстрый практичный путь в AI-разработку.</p>
+      </div>
+      <div class="header-right">
+        <div class="status-row tags-list">
+          <span class="chip gold">Потоковый курс. Новый продукт — выпустился недавно, прошло 3 потока (1 завершён, 2-й и 3-й идут).</span>
+        </div>
+        <div class="status-row tags-list" style="max-width:420px">
+          <span class="chip">Курс полностью записан, проведён 1 поток с выпускным, идут 2-й и 3-й потоки. 129 защищённых выпускных проектов в первом потоке, много положительных отзывов. Требует точечной доработки отдельных модуле</span>
+        </div>
+      </div>
+    </div>
+    <div class="charts-row">
+      <div class="grid grid-2" style="gap:16px;align-content:start">
+        <div class="card stat-card">
+  <div class="label">CSAT (средний)</div>
+  <div class="value" data-count="73.0" data-suffix="%">0%</div>
+  <div class="sub">n=1274, потоков 10</div>
+</div>
+        <div class="card stat-card pink">
+  <div class="label">NPS</div>
+  <div class="value" data-count="73.8" data-suffix="%">0%</div>
+  <div class="sub">n=492</div>
+</div>
+        <div class="card stat-card green">
+  <div class="label">Доходимость</div>
+  <div class="value" data-count="29.0" data-suffix="%">0%</div>
+  <div class="sub">мод.1 → последний</div>
+</div>
+        <div class="card stat-card gold">
+  <div class="label">Студентов</div>
+  <div class="value" data-count="1172" data-suffix="">0</div>
+  <div class="sub">по доступным потокам</div>
+</div>
+      </div>
+      <div class="card chart-card">
+  <h3>CSAT — 5 показателей</h3>
+  <div class="chart-sub">Полезно · Применимо · Интересно · Понятно · Средний (план — пунктиром)</div>
+  <div class="chart-canvas-wrap"><canvas data-chart="radar" data-idx="1" id="radar-1"></canvas></div>
+</div>
+    </div>
+    <div class="card csat-decode">
+  <div class="head-row">
+    <h3>Расшифровка CSAT — что западает</h3>
+    <div class="summary">Промоутер 9–10 · Нейтрал 7–8 · Критик 0–6 · CSAT = %пром − %крит · <b>Средний CSAT 73.0%</b></div>
+  </div>
+  <div class="grid-decode">
+    
+<div class="row">
+  <div class="head">
+    <span class="name">Полезно</span>
+    <span class="target">план ≥65%</span>
+  </div>
+  <div class="bar">
+    <div class="fill ok" data-width="77.1" style="width:0%"></div>
+    <div class="target-line" style="left:65%"></div>
+  </div>
+  <div class="foot">
+    <span class="val">77.1%</span>
+    <span class="delta ok">+12.1 · выше плана</span>
+    <span class="detail">пром 81.9% · крит 4.9% · n=1274</span>
+  </div>
+</div>
+<div class="row">
+  <div class="head">
+    <span class="name">Применимо</span>
+    <span class="target">план ≥45%</span>
+  </div>
+  <div class="bar">
+    <div class="fill ok" data-width="63.8" style="width:0%"></div>
+    <div class="target-line" style="left:45%"></div>
+  </div>
+  <div class="foot">
+    <span class="val">63.8%</span>
+    <span class="delta ok">+18.8 · выше плана</span>
+    <span class="detail">пром 72.8% · крит 9.0% · n=1274</span>
+  </div>
+</div>
+<div class="row">
+  <div class="head">
+    <span class="name">Интересно</span>
+    <span class="target">план ≥40%</span>
+  </div>
+  <div class="bar">
+    <div class="fill ok" data-width="75.0" style="width:0%"></div>
+    <div class="target-line" style="left:40%"></div>
+  </div>
+  <div class="foot">
+    <span class="val">75.0%</span>
+    <span class="delta ok">+35.0 · выше плана</span>
+    <span class="detail">пром 80.5% · крит 5.5% · n=1274</span>
+  </div>
+</div>
+<div class="row">
+  <div class="head">
+    <span class="name">Понятно</span>
+    <span class="target">план ≥60%</span>
+  </div>
+  <div class="bar">
+    <div class="fill ok" data-width="76.3" style="width:0%"></div>
+    <div class="target-line" style="left:60%"></div>
+  </div>
+  <div class="foot">
+    <span class="val">76.3%</span>
+    <span class="delta ok">+16.3 · выше плана</span>
+    <span class="detail">пром 80.8% · крит 4.6% · n=1274</span>
+  </div>
+</div>
+  </div>
+  <div class="weak-banner ok">✓ Все 4 показателя CSAT — выше плановых порогов с запасом ≥5 п.п.</div>
+</div>
+    <div class="charts-row" style="margin-top:18px">
+      <div class="card chart-card">
+  <h3>Доходимость по потокам</h3>
+  <div class="chart-sub">мод.1 → последний модуль; зелёный — выше 60%, жёлтый — 40–60%, красный — &lt;40%</div>
+  <div class="chart-canvas-wrap"><canvas data-chart="streams" data-idx="1" id="streams-1"></canvas></div>
+</div>
+      <div class="three-col" style="grid-template-columns:1fr 1fr;margin-top:0;grid-row-gap:14px">
+        <div class="qcol praise"><h4>👍 Что хвалят</h4><div class="quote">«На курс шёл с конкретной целью — освоить агентную работу и научиться настраивать Claude Code под реальные задачи. Самым полезным оказалось погружение в архитектуру агента: CLAUDE.md, скиллы, MCP-инструменты. Теперь понимаю как правильно дать агенту контекст,…»</div><div class="quote">«Курс дал полное понимание того, как работать с Claude Code как с полноценным разработчиком в команде. Самым полезным оказался подход «вайб-кодинга» - когда я описываю задачу на естественном языке, а Claude Code помогает планировать архитектуру, ищет файлы,…»</div></div>
+        <div class="qcol improve"><h4>🛠 Что просят улучшить</h4><div class="quote">«Надеюсь дальше будет интереснее. Хочется построить мультиагентную систему разработки с оркестрацией»</div><div class="quote">«Пока не совсем понятно стоит ли мне работать в терминале. Очень много информации, которая может и важна, но максимально носит базовый характер. Хочется уже приступать к каким-то конкретным кейсам и практическому применению. Не могу понять как и где эти знания…»</div></div>
+      </div>
+    </div>
+    <div class="three-col" style="grid-template-columns:1fr;margin-top:16px">
+      <div class="qcol risks"><h4>⚠️ Главные риски</h4><ul><li>Быстрая смена инструментов и SDK (Claude Code развивается)</li><li>Проседание доходимости со 2-го потока (33.2% против плановых 60%)</li><li>Сервисы Anthropic становятся платными/недоступными</li></ul></div>
+    </div>
+    <div class="concl"><div class="concl-inner">Курс показал себя как сильный новый продукт: средний CSAT 73.0% и NPS 73.8% — существенно выше плановых порогов; 129 защищённых проектов в первом потоке, объёмная положительная обратная связь. Главные задачи Q3 — разобрать падение доходимости во 2-м потоке, точечно доработать модули (скиллы/хуки/оркестрация) и обновить демонстрации под актуальные версии Claude Code.</div></div>
+  </div>
+</section>
+<section class="slide">
+  <div class="inner stagger">
+    <div class="header-row">
+      <div>
+        <div class="kicker"><span class="dot"></span>Курс 2 из 7 · Q2 2026</div>
+        <h1><span class="icon">📊</span>AI для работы с таблицами</h1>
+        <p class="lead">Научить студентов решать рабочие задачи в таблицах с помощью нейросетей: от автоматизации простых формул до сборки сводных и аналитики через AI. Закрывает массовый запрос на «таблицы + AI».</p>
+      </div>
+      <div class="header-right">
+        <div class="status-row tags-list">
+          <span class="chip gold">Курс переводится в асинхрон с 8-го потока (старт 15 июля). Сейчас работают потоки 1–7.</span>
+        </div>
+        <div class="status-row tags-list" style="max-width:420px">
+          <span class="chip">Во 2 квартале — переход в асинхрон. Параллельно курс работает на потоках 1–7, идёт сбор обратной связи для понимания, как продукт работает до перехода в новый формат.</span>
+        </div>
+      </div>
+    </div>
+    <div class="charts-row">
+      <div class="grid grid-2" style="gap:16px;align-content:start">
+        <div class="card stat-card">
+  <div class="label">CSAT (средний)</div>
+  <div class="value" data-count="56.2" data-suffix="%">0%</div>
+  <div class="sub">n=85, потоков 7</div>
+</div>
+        <div class="card stat-card pink">
+  <div class="label">NPS</div>
+  <div class="value">—</div>
+  <div class="sub">нет данных</div>
+</div>
+        <div class="card stat-card green">
+  <div class="label">Доходимость</div>
+  <div class="value" data-count="43.0" data-suffix="%">0%</div>
+  <div class="sub">мод.1 → последний, по урокам</div>
+</div>
+        <div class="card stat-card gold">
+  <div class="label">Студентов</div>
+  <div class="value" data-count="371" data-suffix="">0</div>
+  <div class="sub">по доступным потокам</div>
+</div>
+      </div>
+      <div class="card chart-card">
+  <h3>CSAT — 5 показателей</h3>
+  <div class="chart-sub">Полезно · Применимо · Интересно · Понятно · Средний (план — пунктиром)</div>
+  <div class="chart-canvas-wrap"><canvas data-chart="radar" data-idx="2" id="radar-2"></canvas></div>
+</div>
+    </div>
+    <div class="card csat-decode">
+  <div class="head-row">
+    <h3>Расшифровка CSAT — что западает</h3>
+    <div class="summary">Промоутер 9–10 · Нейтрал 7–8 · Критик 0–6 · CSAT = %пром − %крит · <b>Средний CSAT 56.2%</b></div>
+  </div>
+  <div class="grid-decode">
+    
+<div class="row">
+  <div class="head">
+    <span class="name">Полезно</span>
+    <span class="target">план ≥65%</span>
+  </div>
+  <div class="bar">
+    <div class="fill bad" data-width="52.9" style="width:0%"></div>
+    <div class="target-line" style="left:65%"></div>
+  </div>
+  <div class="foot">
+    <span class="val">52.9%</span>
+    <span class="delta bad">-12.1 · ниже плана</span>
+    <span class="detail">пром 64.7% · крит 11.8% · n=85</span>
+  </div>
+</div>
+<div class="row">
+  <div class="head">
+    <span class="name">Применимо</span>
+    <span class="target">план ≥45%</span>
+  </div>
+  <div class="bar">
+    <div class="fill warn" data-width="48.2" style="width:0%"></div>
+    <div class="target-line" style="left:45%"></div>
+  </div>
+  <div class="foot">
+    <span class="val">48.2%</span>
+    <span class="delta warn">+3.2 · у нижней границы</span>
+    <span class="detail">пром 60.0% · крит 11.8% · n=85</span>
+  </div>
+</div>
+<div class="row">
+  <div class="head">
+    <span class="name">Интересно</span>
+    <span class="target">план ≥40%</span>
+  </div>
+  <div class="bar">
+    <div class="fill ok" data-width="57.6" style="width:0%"></div>
+    <div class="target-line" style="left:40%"></div>
+  </div>
+  <div class="foot">
+    <span class="val">57.6%</span>
+    <span class="delta ok">+17.6 · выше плана</span>
+    <span class="detail">пром 67.1% · крит 9.4% · n=85</span>
+  </div>
+</div>
+<div class="row">
+  <div class="head">
+    <span class="name">Понятно</span>
+    <span class="target">план ≥60%</span>
+  </div>
+  <div class="bar">
+    <div class="fill ok" data-width="65.9" style="width:0%"></div>
+    <div class="target-line" style="left:60%"></div>
+  </div>
+  <div class="foot">
+    <span class="val">65.9%</span>
+    <span class="delta ok">+5.9 · выше плана</span>
+    <span class="detail">пром 74.1% · крит 8.2% · n=85</span>
+  </div>
+</div>
+  </div>
+  <div class="weak-banner">⚠️ <b>Ниже плана:</b> <b>Полезно</b> (52.9% при пороге 65%, −12.1 п.п.). 🟡 <b>У нижней границы:</b> <b>Применимо</b> (48.2% при пороге 45%, +3.2 п.п.) — это основная зона роста по продукту.</div>
+</div>
+    <div class="charts-row" style="margin-top:18px">
+      <div class="card chart-card" style="justify-content:center;align-items:flex-start">
+  <h3>Доходимость</h3>
+  <div class="chart-sub">Per-stream данных в выгрузке нет</div>
+  <div style="margin-top:10px;font-size:15px;color:#EDE9FE;line-height:1.6">
+    Оценка по агрегату всех потоков (файл «Доходимость по урокам»):<br>
+    <span style="color:#34D399;font-size:34px;font-weight:800;font-variant-numeric:tabular-nums" data-count="43.0" data-suffix="%">0%</span>
+    <span style="color:#9C95B5;font-size:13px;margin-left:8px">мод.1 → последний модуль</span>
+  </div>
+</div>
+      <div class="three-col" style="grid-template-columns:1fr 1fr;margin-top:0;grid-row-gap:14px">
+        <div class="qcol praise"><h4>👍 Что хвалят</h4><div class="quote">«Курс содержит очень много воды и болтовни и мало реальной полезной практики, лично мне здесь видится большой оверюз ИИ там, где он не нужен и даже вреден - не разберетесь потом, что вам нейросеть наваяла, а с каждой иетрацией это будет все больше сваливаться…»</div><div class="quote">«Уроки не похожи на обучение, это скорее демонстрация возможностей нейросетей. Но, это было интересно. В моей работе это не пригодится. Я работаю с точными цифрами, ошибки недопустимы, а результаты, которые выдаются ИИ часто непредсказуемы. проще сделать сразу…»</div></div>
+        <div class="qcol improve"><h4>🛠 Что просят улучшить</h4><div class="quote">«к сожалению, интерфейс некоторых сервисов поменялся, нужно додумывать самому как куда подключаться»</div><div class="quote">«Мне показался избыточным объем лекционного материала. Во многих местах идут много кратные повторы изложения одного и того же.»</div></div>
+      </div>
+    </div>
+    <div class="three-col" style="grid-template-columns:1fr;margin-top:16px">
+      <div class="qcol risks"><h4>⚠️ Главные риски</h4><ul><li>Сложности перехода в асинхрон — часть аудитории привыкла к куратору</li><li>Сервисы (таблицы, AI) меняют интерфейс — устаревают записи</li><li>Низкая «Полезность» (52.9% против 65%) — риск оттока</li></ul></div>
+    </div>
+    <div class="concl"><div class="concl-inner">Курс в Q2 готовится к переходу в асинхрон с 8 потока. Средний CSAT 56.2%; «Полезно» 52.9% (порог 65%) — сигнал, нормально для продукта в переработке. По данным агрегата за все потоки: доходимость мод.1 → итоговый — 43% (планка 60%); сдают итоговый только 20% от вошедших в него. Per-stream данных нет — выгрузка пустая. Главные задачи Q3 — закрыть данные доходимости и ДЗ per-stream, точечно обновить демонстрации,…</div></div>
+  </div>
+</section>
+<section class="slide">
+  <div class="inner stagger">
+    <div class="header-row">
+      <div>
+        <div class="kicker"><span class="dot"></span>Курс 3 из 7 · Q2 2026</div>
+        <h1><span class="icon">🔍</span>Perplexity: от новичка до pro</h1>
+        <p class="lead">Дать практический навык работы с Perplexity и связанными AI-поисковыми инструментами: от базовых запросов до Deep Research и применения в работе. Курс расширен альтернативами после блокировки Perplexity.</p>
+      </div>
+      <div class="header-right">
+        <div class="status-row tags-list">
+          <span class="chip gold">Потоковый курс.</span>
+        </div>
+        <div class="status-row tags-list" style="max-width:420px">
+          <span class="chip">Курс на поддержании. После обновления (добавление альтернативных сервисов после блокировки Perplexity) существенных изменений во 2 квартале не было.</span>
+        </div>
+      </div>
+    </div>
+    <div class="charts-row">
+      <div class="grid grid-2" style="gap:16px;align-content:start">
+        <div class="card stat-card">
+  <div class="label">CSAT (средний)</div>
+  <div class="value" data-count="59.9" data-suffix="%">0%</div>
+  <div class="sub">n=343, потоков 26</div>
+</div>
+        <div class="card stat-card pink">
+  <div class="label">NPS</div>
+  <div class="value" data-count="37.2" data-suffix="%">0%</div>
+  <div class="sub">n=164</div>
+</div>
+        <div class="card stat-card green">
+  <div class="label">Доходимость</div>
+  <div class="value" data-count="79.5" data-suffix="%">0%</div>
+  <div class="sub">мод.1 → последний</div>
+</div>
+        <div class="card stat-card gold">
+  <div class="label">Студентов</div>
+  <div class="value" data-count="572" data-suffix="">0</div>
+  <div class="sub">по доступным потокам</div>
+</div>
+      </div>
+      <div class="card chart-card">
+  <h3>CSAT — 5 показателей</h3>
+  <div class="chart-sub">Полезно · Применимо · Интересно · Понятно · Средний (план — пунктиром)</div>
+  <div class="chart-canvas-wrap"><canvas data-chart="radar" data-idx="3" id="radar-3"></canvas></div>
+</div>
+    </div>
+    <div class="card csat-decode">
+  <div class="head-row">
+    <h3>Расшифровка CSAT — что западает</h3>
+    <div class="summary">Промоутер 9–10 · Нейтрал 7–8 · Критик 0–6 · CSAT = %пром − %крит · <b>Средний CSAT 59.9%</b></div>
+  </div>
+  <div class="grid-decode">
+    
+<div class="row">
+  <div class="head">
+    <span class="name">Полезно</span>
+    <span class="target">план ≥65%</span>
+  </div>
+  <div class="bar">
+    <div class="fill bad" data-width="63.8" style="width:0%"></div>
+    <div class="target-line" style="left:65%"></div>
+  </div>
+  <div class="foot">
+    <span class="val">63.8%</span>
+    <span class="delta bad">-1.2 · ниже плана</span>
+    <span class="detail">пром 72.6% · крит 8.7% · n=343</span>
+  </div>
+</div>
+<div class="row">
+  <div class="head">
+    <span class="name">Применимо</span>
+    <span class="target">план ≥45%</span>
+  </div>
+  <div class="bar">
+    <div class="fill warn" data-width="45.2" style="width:0%"></div>
+    <div class="target-line" style="left:45%"></div>
+  </div>
+  <div class="foot">
+    <span class="val">45.2%</span>
+    <span class="delta warn">+0.2 · у нижней границы</span>
+    <span class="detail">пром 62.7% · крит 17.5% · n=343</span>
+  </div>
+</div>
+<div class="row">
+  <div class="head">
+    <span class="name">Интересно</span>
+    <span class="target">план ≥40%</span>
+  </div>
+  <div class="bar">
+    <div class="fill ok" data-width="61.8" style="width:0%"></div>
+    <div class="target-line" style="left:40%"></div>
+  </div>
+  <div class="foot">
+    <span class="val">61.8%</span>
+    <span class="delta ok">+21.8 · выше плана</span>
+    <span class="detail">пром 72.6% · крит 10.8% · n=343</span>
+  </div>
+</div>
+<div class="row">
+  <div class="head">
+    <span class="name">Понятно</span>
+    <span class="target">план ≥60%</span>
+  </div>
+  <div class="bar">
+    <div class="fill ok" data-width="68.8" style="width:0%"></div>
+    <div class="target-line" style="left:60%"></div>
+  </div>
+  <div class="foot">
+    <span class="val">68.8%</span>
+    <span class="delta ok">+8.8 · выше плана</span>
+    <span class="detail">пром 75.8% · крит 7.0% · n=343</span>
+  </div>
+</div>
+  </div>
+  <div class="weak-banner">⚠️ <b>Ниже плана:</b> <b>Полезно</b> (63.8% при пороге 65%, −1.2 п.п.). 🟡 <b>У нижней границы:</b> <b>Применимо</b> (45.2% при пороге 45%, +0.2 п.п.) — это основная зона роста по продукту.</div>
+</div>
+    <div class="charts-row" style="margin-top:18px">
+      <div class="card chart-card">
+  <h3>Доходимость по потокам</h3>
+  <div class="chart-sub">мод.1 → последний модуль; зелёный — выше 60%, жёлтый — 40–60%, красный — &lt;40%</div>
+  <div class="chart-canvas-wrap"><canvas data-chart="streams" data-idx="3" id="streams-3"></canvas></div>
+</div>
+      <div class="three-col" style="grid-template-columns:1fr 1fr;margin-top:0;grid-row-gap:14px">
+        <div class="qcol praise"><h4>👍 Что хвалят</h4><div class="quote">«очень полезны были конспекты после лекций, в рамках которых хорошо получается проработать и глубже закрепить полученные материалы Спасибо!»</div><div class="quote">«Темы очень интересные, но понравились только уроки по тексту и по видео благодаря своей логике. Картинки 50/50, они проще видео, но были показаны как будто более поверхностно.»</div></div>
+        <div class="qcol improve"><h4>🛠 Что просят улучшить</h4><div class="quote">«Не хватает скорости и вариантов использования, Иногда еле понимаю курс, С практикой понимание приходит.»</div><div class="quote">«Про проверку сложно что-либо сказать. В первом задании просто отмечено Принято, а предыдущее задание еще не проверено»</div></div>
+      </div>
+    </div>
+    <div class="three-col" style="grid-template-columns:1fr;margin-top:16px">
+      <div class="qcol risks"><h4>⚠️ Главные риски</h4><ul><li>Блокировка Perplexity/альтернатив в РФ</li><li>Устаревание интерфейсов сервисов</li><li>Поток 11 — заметная просадка доходимости (40%)</li></ul></div>
+    </div>
+    <div class="concl"><div class="concl-inner">Курс в стабильной форме: средний CSAT 59.9% и NPS 37.2% выше планки, обратная связь преимущественно позитивная. Главные точки роста — обновить устаревшие фрагменты видео под текущий интерфейс сервисов и разобраться с занижением метрики выполнения ДЗ и финального проекта.</div></div>
+  </div>
+</section>
+<section class="slide">
+  <div class="inner stagger">
+    <div class="header-row">
+      <div>
+        <div class="kicker"><span class="dot"></span>Курс 4 из 7 · Q2 2026</div>
+        <h1><span class="icon">🎨</span>Визуальный контент с ИИ</h1>
+        <p class="lead">Дать практический навык создания визуального контента с помощью нейросетей (Midjourney, Flux, Leonardo и др.) для дизайнеров, художников, маркетологов и предпринимателей.</p>
+      </div>
+      <div class="header-right">
+        <div class="status-row tags-list">
+          <span class="chip gold">Асинхронный курс с активными QA / workshop-встречами.</span>
+        </div>
+        <div class="status-row tags-list" style="max-width:420px">
+          <span class="chip">Курс актуален и активно используется. Сейчас идёт переработка — в ближайшие пару недель планируется переписать большое количество уроков. На QA / workshop стабильно приходит 20–30 студентов — нетипичн</span>
+        </div>
+      </div>
+    </div>
+    <div class="charts-row">
+      <div class="grid grid-2" style="gap:16px;align-content:start">
+        <div class="card stat-card">
+  <div class="label">CSAT (средний)</div>
+  <div class="value" data-count="61.0" data-suffix="%">0%</div>
+  <div class="sub">n=132, потоков 3</div>
+</div>
+        <div class="card stat-card pink">
+  <div class="label">NPS</div>
+  <div class="value" data-count="51.7" data-suffix="%">0%</div>
+  <div class="sub">n=29</div>
+</div>
+        <div class="card stat-card green">
+  <div class="label">Доходимость</div>
+  <div class="value" data-count="74.4" data-suffix="%">0%</div>
+  <div class="sub">мод.1 → последний, по урокам</div>
+</div>
+        <div class="card stat-card gold">
+  <div class="label">Студентов</div>
+  <div class="value">—</div>
+  <div class="sub">нет данных</div>
+</div>
+      </div>
+      <div class="card chart-card">
+  <h3>CSAT — 5 показателей</h3>
+  <div class="chart-sub">Полезно · Применимо · Интересно · Понятно · Средний (план — пунктиром)</div>
+  <div class="chart-canvas-wrap"><canvas data-chart="radar" data-idx="4" id="radar-4"></canvas></div>
+</div>
+    </div>
+    <div class="card csat-decode">
+  <div class="head-row">
+    <h3>Расшифровка CSAT — что западает</h3>
+    <div class="summary">Промоутер 9–10 · Нейтрал 7–8 · Критик 0–6 · CSAT = %пром − %крит · <b>Средний CSAT 61.0%</b></div>
+  </div>
+  <div class="grid-decode">
+    
+<div class="row">
+  <div class="head">
+    <span class="name">Полезно</span>
+    <span class="target">план ≥65%</span>
+  </div>
+  <div class="bar">
+    <div class="fill bad" data-width="64.4" style="width:0%"></div>
+    <div class="target-line" style="left:65%"></div>
+  </div>
+  <div class="foot">
+    <span class="val">64.4%</span>
+    <span class="delta bad">-0.6 · ниже плана</span>
+    <span class="detail">пром 76.5% · крит 12.1% · n=132</span>
+  </div>
+</div>
+<div class="row">
+  <div class="head">
+    <span class="name">Применимо</span>
+    <span class="target">план ≥45%</span>
+  </div>
+  <div class="bar">
+    <div class="fill warn" data-width="47.7" style="width:0%"></div>
+    <div class="target-line" style="left:45%"></div>
+  </div>
+  <div class="foot">
+    <span class="val">47.7%</span>
+    <span class="delta warn">+2.7 · у нижней границы</span>
+    <span class="detail">пром 61.4% · крит 13.6% · n=132</span>
+  </div>
+</div>
+<div class="row">
+  <div class="head">
+    <span class="name">Интересно</span>
+    <span class="target">план ≥40%</span>
+  </div>
+  <div class="bar">
+    <div class="fill ok" data-width="61.4" style="width:0%"></div>
+    <div class="target-line" style="left:40%"></div>
+  </div>
+  <div class="foot">
+    <span class="val">61.4%</span>
+    <span class="delta ok">+21.4 · выше плана</span>
+    <span class="detail">пром 74.2% · крит 12.9% · n=132</span>
+  </div>
+</div>
+<div class="row">
+  <div class="head">
+    <span class="name">Понятно</span>
+    <span class="target">план ≥60%</span>
+  </div>
+  <div class="bar">
+    <div class="fill ok" data-width="70.5" style="width:0%"></div>
+    <div class="target-line" style="left:60%"></div>
+  </div>
+  <div class="foot">
+    <span class="val">70.5%</span>
+    <span class="delta ok">+10.5 · выше плана</span>
+    <span class="detail">пром 78.8% · крит 8.3% · n=132</span>
+  </div>
+</div>
+  </div>
+  <div class="weak-banner">⚠️ <b>Ниже плана:</b> <b>Полезно</b> (64.4% при пороге 65%, −0.6 п.п.). 🟡 <b>У нижней границы:</b> <b>Применимо</b> (47.7% при пороге 45%, +2.7 п.п.) — это основная зона роста по продукту.</div>
+</div>
+    <div class="charts-row" style="margin-top:18px">
+      <div class="card chart-card" style="justify-content:center;align-items:flex-start">
+  <h3>Доходимость</h3>
+  <div class="chart-sub">Per-stream данных в выгрузке нет</div>
+  <div style="margin-top:10px;font-size:15px;color:#EDE9FE;line-height:1.6">
+    Оценка по агрегату всех потоков (файл «Доходимость по урокам»):<br>
+    <span style="color:#34D399;font-size:34px;font-weight:800;font-variant-numeric:tabular-nums" data-count="74.4" data-suffix="%">0%</span>
+    <span style="color:#9C95B5;font-size:13px;margin-left:8px">мод.1 → последний модуль</span>
+  </div>
+</div>
+      <div class="three-col" style="grid-template-columns:1fr 1fr;margin-top:0;grid-row-gap:14px">
+        <div class="qcol praise"><h4>👍 Что хвалят</h4><div class="quote">«Оценка 7 по применению в работе связана с тем, что, я не работаю и не всё мне пригодится. Но уроки смотрела все, хотя домашние задания не все успела сделать (приболела малость). Спасибо за курс!»</div><div class="quote">«Добрый день. Единственная проблема - это доступность бесплатного контента. Хотелось бы подробного разбора sintx ai тк я по глупости спустила базовую подписку за один день (ну ладно, текстовики же доступны, но gpt у них разочаровал полностью). Ещё сейчас…»</div></div>
+        <div class="qcol improve"><h4>🛠 Что просят улучшить</h4><div class="quote">«В некоторых уроках не хватало более подробных объяснений что именно делает преподаватель, с какой целью. От куратора никогда не было разбора ДЗ, какие стороны в работе были сильными, что нужно бы подтянуть.»</div><div class="quote">«Добрый день. Единственная проблема - это доступность бесплатного контента. Хотелось бы подробного разбора sintx ai тк я по глупости спустила базовую подписку за один день (ну ладно, текстовики же доступны, но gpt у них разочаровал полностью). Ещё сейчас…»</div></div>
+      </div>
+    </div>
+    <div class="three-col" style="grid-template-columns:1fr;margin-top:16px">
+      <div class="qcol risks"><h4>⚠️ Главные риски</h4><ul><li>Незавершённая переработка уроков затянется</li><li>Быстрая смена сервисов генерации изображений/видео</li><li>Узкий сбор CSAT/NPS — только по потоку neuro-visual-2.0</li></ul></div>
+    </div>
+    <div class="concl"><div class="concl-inner">Курс живой и востребованный: посещаемость QA/workshop 20–30 человек — нетипичный сигнал для асинхрона. NPS 51.7% и средний CSAT 61.0% подтверждают позитивную динамику. По данным агрегата за все потоки: доходимость мод.1 → итоговый — 74.4% (выше планки 60%); итоговый проект сдают 94.8% от вошедших в него — очень сильный сигнал завершаемости. Главная задача Q3 — завершить переработку уроков, расширить сбор CSAT/NPS на…</div></div>
+  </div>
+</section>
+<section class="slide">
+  <div class="inner stagger">
+    <div class="header-row">
+      <div>
+        <div class="kicker"><span class="dot"></span>Курс 5 из 7 · Q2 2026</div>
+        <h1><span class="icon">🎓</span>Цифровой старт: от азов к миру нейросетей (грант для пенсионеров)</h1>
+        <p class="lead">Дать аудитории старшего поколения базовое представление о нейросетях, безопасной работе в сети и применении ИИ в повседневной жизни. Грантовый продукт — социально-образовательная задача.</p>
+      </div>
+      <div class="header-right">
+        <div class="status-row tags-list">
+          <span class="chip gold">Асинхронный курс. Грантовый проект, ориентирован на пенсионеров.</span>
+        </div>
+        <div class="status-row tags-list" style="max-width:420px">
+          <span class="chip">Курс на поддержании. Активных продуктовых изменений во 2 квартале не было — курс продолжает работать в текущем виде.</span>
+        </div>
+      </div>
+    </div>
+    <div class="charts-row">
+      <div class="grid grid-2" style="gap:16px;align-content:start">
+        <div class="card stat-card">
+  <div class="label">CSAT (средний)</div>
+  <div class="value" data-count="73.8" data-suffix="%">0%</div>
+  <div class="sub">n=63, потоков 1</div>
+</div>
+        <div class="card stat-card pink">
+  <div class="label">NPS</div>
+  <div class="value" data-count="77.8" data-suffix="%">0%</div>
+  <div class="sub">n=18</div>
+</div>
+        <div class="card stat-card green">
+  <div class="label">Доходимость</div>
+  <div class="value">—</div>
+  <div class="sub">нет данных</div>
+</div>
+        <div class="card stat-card gold">
+  <div class="label">Студентов</div>
+  <div class="value">—</div>
+  <div class="sub">нет данных</div>
+</div>
+      </div>
+      <div class="card chart-card">
+  <h3>CSAT — 5 показателей</h3>
+  <div class="chart-sub">Полезно · Применимо · Интересно · Понятно · Средний (план — пунктиром)</div>
+  <div class="chart-canvas-wrap"><canvas data-chart="radar" data-idx="5" id="radar-5"></canvas></div>
+</div>
+    </div>
+    <div class="card csat-decode">
+  <div class="head-row">
+    <h3>Расшифровка CSAT — что западает</h3>
+    <div class="summary">Промоутер 9–10 · Нейтрал 7–8 · Критик 0–6 · CSAT = %пром − %крит · <b>Средний CSAT 73.8%</b></div>
+  </div>
+  <div class="grid-decode">
+    
+<div class="row">
+  <div class="head">
+    <span class="name">Полезно</span>
+    <span class="target">план ≥65%</span>
+  </div>
+  <div class="bar">
+    <div class="fill warn" data-width="66.7" style="width:0%"></div>
+    <div class="target-line" style="left:65%"></div>
+  </div>
+  <div class="foot">
+    <span class="val">66.7%</span>
+    <span class="delta warn">+1.7 · у нижней границы</span>
+    <span class="detail">пром 79.4% · крит 12.7% · n=63</span>
+  </div>
+</div>
+<div class="row">
+  <div class="head">
+    <span class="name">Применимо</span>
+    <span class="target">план ≥45%</span>
+  </div>
+  <div class="bar">
+    <div class="fill ok" data-width="74.6" style="width:0%"></div>
+    <div class="target-line" style="left:45%"></div>
+  </div>
+  <div class="foot">
+    <span class="val">74.6%</span>
+    <span class="delta ok">+29.6 · выше плана</span>
+    <span class="detail">пром 85.7% · крит 11.1% · n=63</span>
+  </div>
+</div>
+<div class="row">
+  <div class="head">
+    <span class="name">Интересно</span>
+    <span class="target">план ≥40%</span>
+  </div>
+  <div class="bar">
+    <div class="fill ok" data-width="66.7" style="width:0%"></div>
+    <div class="target-line" style="left:40%"></div>
+  </div>
+  <div class="foot">
+    <span class="val">66.7%</span>
+    <span class="delta ok">+26.7 · выше плана</span>
+    <span class="detail">пром 79.4% · крит 12.7% · n=63</span>
+  </div>
+</div>
+<div class="row">
+  <div class="head">
+    <span class="name">Понятно</span>
+    <span class="target">план ≥60%</span>
+  </div>
+  <div class="bar">
+    <div class="fill ok" data-width="87.3" style="width:0%"></div>
+    <div class="target-line" style="left:60%"></div>
+  </div>
+  <div class="foot">
+    <span class="val">87.3%</span>
+    <span class="delta ok">+27.3 · выше плана</span>
+    <span class="detail">пром 92.1% · крит 4.8% · n=63</span>
+  </div>
+</div>
+  </div>
+  <div class="weak-banner">🟡 <b>У нижней границы:</b> <b>Полезно</b> (66.7% при пороге 65%, +1.7 п.п.) — запас небольшой, стоит следить.</div>
+</div>
+    <div class="charts-row" style="margin-top:18px">
+      <div class="card chart-card" style="justify-content:center;align-items:center;text-align:center">
+  <div style="opacity:.55"><div style="font-size:42px">🗂️</div>
+  <div style="color:#C7BFE0;font-size:13px;margin-top:8px">Данных по доходимости<br>в выгрузке нет</div></div>
+</div>
+      <div class="three-col" style="grid-template-columns:1fr 1fr;margin-top:0;grid-row-gap:14px">
+        <div class="qcol praise"><h4>👍 Что хвалят</h4><div class="quote">«Модуль практически полностью бесполезный, его нужно или удалить или перезаписать»</div><div class="quote">«Все хорошо, спасибо! В комментарии к предыдущему уроку я написала, что выбранны»</div></div>
+        <div class="qcol improve"><h4>🛠 Что просят улучшить</h4><div class="quote">«Один модуль воспринимается как избыточный — стоит пересобрать.»</div><div class="quote">«Хочется кнопку «следующий урок» рядом с ДЗ.»</div></div>
+      </div>
+    </div>
+    <div class="three-col" style="grid-template-columns:1fr;margin-top:16px">
+      <div class="qcol risks"><h4>⚠️ Главные риски</h4><ul><li>Сложности с UX у пожилой аудитории</li><li>Слабый/«бесполезный» модуль — риск негативных отзывов</li><li>Окончание грантового финансирования</li></ul></div>
+    </div>
+    <div class="concl"><div class="concl-inner">Курс в очень хорошей форме по удовлетворённости: средний CSAT 73.8% и NPS 77.8% — значительно выше плановых порогов. Точечно стоит пересобрать слабый модуль и улучшить UX. В Q3 — закрыть пробел по данным доходимости.</div></div>
+  </div>
+</section>
+<section class="slide">
+  <div class="inner stagger">
+    <div class="header-row">
+      <div>
+        <div class="kicker"><span class="dot"></span>Курс 6 из 7 · Q2 2026</div>
+        <h1><span class="icon">✨</span>Нейросети для жизни</h1>
+        <p class="lead">Помочь широкой аудитории — особенно тем, кто не работает в IT, — освоить базовые нейросети для бытовых и хобби-задач: фото, тексты, поиск, повседневная рутина.</p>
+      </div>
+      <div class="header-right">
+        <div class="status-row tags-list">
+          <span class="chip gold">Асинхронный курс. Существует в текущем виде, пересобирался из материалов других курсов.</span>
+        </div>
+        <div class="status-row tags-list" style="max-width:420px">
+          <span class="chip">Курс находится на поддержании. Серьёзных изменений во 2 квартале не было — продукт продолжает жить в текущем виде.</span>
+        </div>
+      </div>
+    </div>
+    <div class="charts-row">
+      <div class="grid grid-2" style="gap:16px;align-content:start">
+        <div class="card stat-card">
+  <div class="label">CSAT (средний)</div>
+  <div class="value">—</div>
+  <div class="sub">нет данных</div>
+</div>
+        <div class="card stat-card pink">
+  <div class="label">NPS</div>
+  <div class="value">—</div>
+  <div class="sub">нет данных</div>
+</div>
+        <div class="card stat-card green">
+  <div class="label">Доходимость</div>
+  <div class="value">—</div>
+  <div class="sub">нет данных</div>
+</div>
+        <div class="card stat-card gold">
+  <div class="label">Студентов</div>
+  <div class="value">—</div>
+  <div class="sub">нет данных</div>
+</div>
+      </div>
+      <div class="card chart-card" style="justify-content:center;align-items:center;text-align:center">
+  <div style="opacity:.6">
+    <div style="font-size:48px;margin-bottom:10px">📊</div>
+    <div style="color:#C7BFE0;font-size:14px">За Q2 2026 ответов CSAT/NPS<br>по этому курсу не нашлось</div>
+  </div>
+</div>
+    </div>
+    
+    <div class="charts-row" style="margin-top:18px">
+      <div class="card chart-card" style="justify-content:center;align-items:center;text-align:center">
+  <div style="opacity:.55"><div style="font-size:42px">🗂️</div>
+  <div style="color:#C7BFE0;font-size:13px;margin-top:8px">Данных по доходимости<br>в выгрузке нет</div></div>
+</div>
+      <div class="three-col" style="grid-template-columns:1fr 1fr;margin-top:0;grid-row-gap:14px">
+        <div class="qcol praise empty"><h4>👍 Что хвалят</h4><div class="nodata">Отзывов по этому тегу в Q2 анкетах не нашлось</div></div>
+        <div class="qcol improve empty"><h4>🛠 Что просят улучшить</h4><div class="nodata">Запросов на улучшение пока не зафиксировано</div></div>
+      </div>
+    </div>
+    <div class="three-col" style="grid-template-columns:1fr;margin-top:16px">
+      <div class="qcol risks"><h4>⚠️ Главные риски</h4><ul><li>Нет сбора CSAT/NPS — невозможно отслеживать качество продукта</li><li>Курс в режиме поддержания — постепенное устаревание материала</li><li>Сервисы из курса блокируются/становятся платными</li></ul></div>
+    </div>
+    <div class="concl"><div class="concl-inner">Курс находится в режиме поддержания: продуктовых изменений в Q2 не проводилось, активные данные по CSAT/NPS/доходимости в Q2 2026 не собрались. Главная задача Q3 — проверить настройку сбора метрик и принять продуктовое решение по курсу.</div></div>
+  </div>
+</section>
+<section class="slide">
+  <div class="inner stagger">
+    <div class="header-row">
+      <div>
+        <div class="kicker"><span class="dot"></span>Курс 7 из 7 · Q2 2026</div>
+        <h1><span class="icon">🛡️</span>Цифровая безопасность (курс по мошенникам)</h1>
+        <p class="lead">Бесплатный экспериментальный продукт по цифровой безопасности — обучение распознаванию мошеннических схем. Используется маркетингом как инструмент лидогенерации, подарка, бонуса, виральной механики.</p>
+      </div>
+      <div class="header-right">
+        <div class="status-row tags-list">
+          <span class="chip gold">Экспериментальный проект, бесплатный продукт.</span>
+        </div>
+        <div class="status-row tags-list" style="max-width:420px">
+          <span class="chip">Продукт собран, есть лендинг и возможность регистрации, передан в маркетинг. Активной продуктовой доработки в Q2 не было.</span>
+        </div>
+      </div>
+    </div>
+    <div class="charts-row">
+      <div class="grid grid-2" style="gap:16px;align-content:start">
+        <div class="card stat-card">
+  <div class="label">CSAT (средний)</div>
+  <div class="value">—</div>
+  <div class="sub">нет данных</div>
+</div>
+        <div class="card stat-card pink">
+  <div class="label">NPS</div>
+  <div class="value">—</div>
+  <div class="sub">нет данных</div>
+</div>
+        <div class="card stat-card green">
+  <div class="label">Доходимость</div>
+  <div class="value">—</div>
+  <div class="sub">нет данных</div>
+</div>
+        <div class="card stat-card gold">
+  <div class="label">Студентов</div>
+  <div class="value">—</div>
+  <div class="sub">нет данных</div>
+</div>
+      </div>
+      <div class="card chart-card" style="justify-content:center;align-items:center;text-align:center">
+  <div style="opacity:.6">
+    <div style="font-size:48px;margin-bottom:10px">📊</div>
+    <div style="color:#C7BFE0;font-size:14px">За Q2 2026 ответов CSAT/NPS<br>по этому курсу не нашлось</div>
+  </div>
+</div>
+    </div>
+    
+    <div class="charts-row" style="margin-top:18px">
+      <div class="card chart-card" style="justify-content:center;align-items:center;text-align:center">
+  <div style="opacity:.55"><div style="font-size:42px">🗂️</div>
+  <div style="color:#C7BFE0;font-size:13px;margin-top:8px">Данных по доходимости<br>в выгрузке нет</div></div>
+</div>
+      <div class="three-col" style="grid-template-columns:1fr 1fr;margin-top:0;grid-row-gap:14px">
+        <div class="qcol praise empty"><h4>👍 Что хвалят</h4><div class="nodata">Отзывов по этому тегу в Q2 анкетах не нашлось</div></div>
+        <div class="qcol improve"><h4>🛠 Что просят улучшить</h4><div class="quote">«Настроить сбор обратной связи — без него невозможно говорить о зонах роста по данным.»</div></div>
+      </div>
+    </div>
+    <div class="three-col" style="grid-template-columns:1fr;margin-top:16px">
+      <div class="qcol risks"><h4>⚠️ Главные риски</h4><ul><li>Нет данных о пользователях продукта</li><li>Продукт «зависает» в маркетинге без продуктового владельца</li><li>Устаревание примеров мошеннических схем</li></ul></div>
+    </div>
+    <div class="concl"><div class="concl-inner">Экспериментальный бесплатный продукт передан в маркетинг. Активной продуктовой работы в Q2 не было, обратной связи и регистрационных данных в выгрузке нет. Ключевая задача Q3 — закрыть пробел по сбору данных и определить дальнейшую судьбу продукта.</div></div>
+  </div>
+</section>
+</div>
+<div class="nav" id="nav">
+  <button id="prev" title="Назад">‹</button>
+  <div class="dots" id="dots"></div>
+  <span class="counter" id="counter">1 / 1</span>
+  <button id="next" title="Вперёд">›</button>
+</div>
+<div class="kbd-hint">
+  <kbd>←</kbd><kbd>→</kbd> навигация · <kbd>Home</kbd> к началу
+</div>
+
+<script>
+const DATA = {"intro": {"courses": 7, "students": 2115, "csat_answers": 1897, "nps_answers": 703, "avg_csat": 64.8}, "slides": [null, {"tag": "claudecode", "name": "Claude Code: практический курс по AI-разработке", "csat": {"Полезно": 77.1, "Применимо": 63.8, "Интересно": 75.0, "Понятно": 76.3, "Средний": 73.0, "n": 1274, "potoks": 10}, "streams": [{"potok": "1", "doh": 53.7, "total": 516}, {"potok": "2", "doh": 33.2, "total": 330}, {"potok": "3", "doh": 0, "total": 326}]}, {"tag": "ai-tables", "name": "AI для работы с таблицами", "csat": {"Полезно": 52.9, "Применимо": 48.2, "Интересно": 57.6, "Понятно": 65.9, "Средний": 56.2, "n": 85, "potoks": 7}, "streams": []}, {"tag": "perplexity", "name": "Perplexity: от новичка до pro", "csat": {"Полезно": 63.8, "Применимо": 45.2, "Интересно": 61.8, "Понятно": 68.8, "Средний": 59.9, "n": 343, "potoks": 26}, "streams": [{"potok": "1", "doh": 100, "total": 4}, {"potok": "2", "doh": 100, "total": 4}, {"potok": "3", "doh": 66.7, "total": 4}, {"potok": "4", "doh": 75, "total": 5}, {"potok": "5", "doh": 100, "total": 14}, {"potok": "6", "doh": 76.1, "total": 290}, {"potok": "7", "doh": 69.6, "total": 44}, {"potok": "8", "doh": 82.8, "total": 48}, {"potok": "9", "doh": 83.3, "total": 35}, {"potok": "10", "doh": 100, "total": 38}, {"potok": "11", "doh": 40, "total": 38}, {"potok": "12", "doh": 61.1, "total": 48}]}, {"tag": "neuro-visual", "name": "Визуальный контент с ИИ", "csat": {"Полезно": 64.4, "Применимо": 47.7, "Интересно": 61.4, "Понятно": 70.5, "Средний": 61.0, "n": 132, "potoks": 3}, "streams": []}, {"tag": "grand", "name": "Цифровой старт: от азов к миру нейросетей (грант для пенсионеров)", "csat": {"Полезно": 66.7, "Применимо": 74.6, "Интересно": 66.7, "Понятно": 87.3, "Средний": 73.8, "n": 63, "potoks": 1}, "streams": []}, {"tag": "neuro-life", "name": "Нейросети для жизни", "csat": null, "streams": []}, {"tag": null, "name": "Цифровая безопасность (курс по мошенникам)", "csat": null, "streams": []}]};
+
+function el(tag, cls, html){
+  const e = document.createElement(tag);
+  if(cls) e.className = cls;
+  if(html != null) e.innerHTML = html;
+  return e;
+}
+
+function fmtPct(v){ return v == null ? '—' : v.toFixed(1).replace('.0','') + '%'; }
+function fmtNum(v){ return v == null ? '—' : v.toLocaleString('ru-RU'); }
+
+const slides = Array.from(document.querySelectorAll('.slide'));
+const dotsBox = document.getElementById('dots');
+const counter = document.getElementById('counter');
+const prevBtn = document.getElementById('prev');
+const nextBtn = document.getElementById('next');
+
+let current = 0;
+
+function makeDots(){
+  slides.forEach((_, i) => {
+    const d = el('div', 'dot');
+    d.addEventListener('click', () => goTo(i));
+    dotsBox.appendChild(d);
+  });
+}
+makeDots();
+
+function updateDots(){
+  document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === current));
+  counter.textContent = `${current + 1} / ${slides.length}`;
+}
+
+function goTo(i){
+  if(i < 0 || i >= slides.length || i === current) return;
+  slides[current].classList.remove('active');
+  slides[current].classList.add(i > current ? 'prev' : '');
+  setTimeout(() => slides[current].classList.remove('prev'), 50);
+  current = i;
+  slides[current].classList.add('active');
+  updateDots();
+  animateSlide(current);
+}
+
+prevBtn.addEventListener('click', () => goTo(current - 1));
+nextBtn.addEventListener('click', () => goTo(current + 1));
+document.addEventListener('keydown', (e) => {
+  if(e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') goTo(current + 1);
+  if(e.key === 'ArrowLeft' || e.key === 'PageUp') goTo(current - 1);
+  if(e.key === 'Home') goTo(0);
+  if(e.key === 'End') goTo(slides.length - 1);
+});
+
+// Animated counter for stat numbers
+function animateCount(elNode, from, to, suffix, duration){
+  duration = duration || 1000;
+  const start = performance.now();
+  const isPct = suffix === '%';
+  function step(now){
+    const t = Math.min(1, (now - start) / duration);
+    const ease = 1 - Math.pow(1 - t, 3);
+    const v = from + (to - from) * ease;
+    elNode.textContent = isPct ? v.toFixed(1).replace('.0', '') + '%' : Math.round(v).toLocaleString('ru-RU');
+    if(t < 1) requestAnimationFrame(step);
+    else elNode.textContent = isPct ? to.toFixed(1).replace('.0','') + '%' : Math.round(to).toLocaleString('ru-RU');
+  }
+  requestAnimationFrame(step);
+}
+
+const chartInstances = {};
+
+function buildRadarChart(canvas, csat){
+  if(chartInstances[canvas.id]) chartInstances[canvas.id].destroy();
+  const labels = ['Полезно', 'Применимо', 'Интересно', 'Понятно', 'Средний'];
+  const values = labels.map(k => csat[k]);
+  const planLine = [65, 45, 40, 60, 50]; // thresholds (Avg ~50% as illustrative)
+  chartInstances[canvas.id] = new Chart(canvas, {
+    type: 'radar',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Факт Q2',
+          data: values,
+          fill: true,
+          backgroundColor: 'rgba(139,92,246,0.35)',
+          borderColor: 'rgba(167,139,250,1)',
+          borderWidth: 2.5,
+          pointBackgroundColor: '#F5C44A',
+          pointBorderColor: '#fff',
+          pointRadius: 5,
+          pointHoverRadius: 7,
+        },
+        {
+          label: 'План',
+          data: planLine,
+          fill: false,
+          borderColor: 'rgba(236,72,153,0.55)',
+          borderWidth: 2,
+          borderDash: [6, 4],
+          pointRadius: 0,
+          pointHitRadius: 0,
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      animation: {duration: 900, easing: 'easeOutQuart'},
+      plugins: {
+        legend: {labels: {color: '#EDE9FE', font: {size: 12}}, position: 'bottom'},
+        tooltip: {callbacks: {label: c => `${c.dataset.label}: ${c.raw}%`}}
+      },
+      scales: {
+        r: {
+          min: 0, max: 100,
+          ticks: {color: '#9C95B5', backdropColor: 'transparent', stepSize: 25, font: {size: 10}},
+          grid: {color: 'rgba(167,139,250,0.18)'},
+          angleLines: {color: 'rgba(167,139,250,0.25)'},
+          pointLabels: {color: '#EDE9FE', font: {size: 12, weight: '600'}},
+        }
+      }
+    }
+  });
+}
+
+function buildStreamsBar(canvas, streams){
+  if(chartInstances[canvas.id]) chartInstances[canvas.id].destroy();
+  const labels = streams.map(s => 'Поток ' + s.potok);
+  const doh = streams.map(s => s.doh);
+  const totals = streams.map(s => s.total);
+  chartInstances[canvas.id] = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Доходимость, %',
+        data: doh,
+        backgroundColor: ctx => {
+          const v = ctx.raw;
+          if(v >= 60) return 'rgba(52,211,153,0.75)';
+          if(v >= 40) return 'rgba(245,196,74,0.78)';
+          return 'rgba(248,113,113,0.78)';
+        },
+        borderColor: 'rgba(255,255,255,0.15)',
+        borderWidth: 1,
+        borderRadius: 8,
+        maxBarThickness: 38,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      animation: {duration: 900, easing: 'easeOutQuart'},
+      plugins: {
+        legend: {display: false},
+        tooltip: {
+          callbacks: {
+            label: ctx => `${ctx.raw}% (${totals[ctx.dataIndex]} студ.)`
+          }
+        }
+      },
+      scales: {
+        x: {ticks: {color: '#EDE9FE', font: {size: 11}}, grid: {color: 'rgba(167,139,250,0.08)'}},
+        y: {min: 0, max: 100, ticks: {color: '#9C95B5', callback: v => v + '%', font: {size: 11}},
+            grid: {color: 'rgba(167,139,250,0.12)'}},
+      }
+    }
+  });
+}
+
+function animateSlide(i){
+  const sl = slides[i];
+  // animated counters
+  sl.querySelectorAll('[data-count]').forEach(node => {
+    const to = parseFloat(node.dataset.count);
+    const suffix = node.dataset.suffix || '';
+    animateCount(node, 0, to, suffix, 1100);
+  });
+  // animated CSAT bars
+  sl.querySelectorAll('.csat-decode .fill[data-width]').forEach(b => {
+    const w = parseFloat(b.dataset.width);
+    b.style.width = '0%';
+    requestAnimationFrame(() => requestAnimationFrame(() => { b.style.width = w + '%'; }));
+  });
+  // build charts
+  sl.querySelectorAll('canvas[data-chart="radar"]').forEach(c => {
+    const csat = DATA.slides[parseInt(c.dataset.idx)].csat;
+    if(csat) buildRadarChart(c, csat);
+  });
+  sl.querySelectorAll('canvas[data-chart="streams"]').forEach(c => {
+    const sd = DATA.slides[parseInt(c.dataset.idx)].streams;
+    if(sd && sd.length) buildStreamsBar(c, sd);
+  });
+}
+
+// Initial activate
+slides[0].classList.add('active');
+updateDots();
+setTimeout(() => animateSlide(0), 60);
+
+// Start button
+document.querySelectorAll('.start-btn').forEach(b => b.addEventListener('click', () => goTo(1)));
+</script>
+</body>
+</html>
